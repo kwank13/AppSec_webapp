@@ -1,0 +1,239 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Python Flask Bucket List App</title>
+
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+
+    <link href="http://getbootstrap.com/examples/jumbotron-narrow/jumbotron-narrow.css" rel="stylesheet">
+
+    <script src="../static/js/jquery-1.11.2.js"></script>
+
+
+
+
+        <script>
+		$(function(){
+      GetAllWishes(1);
+    });
+
+    function GetAllWishes(_page){
+      var _offset = (_page - 1) * 10;
+      console.log(_offset);
+			    $.ajax({
+        			url: '/getAllWishesSigned',
+				      type: 'POST',
+              data: {offset:_offset},
+			        success:function(response) {
+					console.log(response);
+					var data = JSON.parse(response);
+
+          var itemsPerPage = 10;
+          var total = data[1]['total'];
+          console.log(total);
+          var pageCount = total/itemsPerPage;
+          var pageRem = total % itemsPerPage;
+          if (pageRem != 0) {
+                pageCount = Math.floor(pageCount) + 1;
+          }
+          console.log(pageCount);
+          var title = data[0][0].Title;
+          console.log(title);
+
+          $('.pagination').empty();
+           
+          var pageStart = $('#hdnStart').val();
+          var pageEnd = $('#hdnEnd').val();
+
+          if (pageStart > 5) {
+                          var aPrev = $('<a/>').attr({
+                                  'href': '#'
+                              }, {
+                                  'aria-label': 'Previous'
+                              })
+                              .append($('<span/>').attr('aria-hidden', 'true').html('&laquo;'));
+           
+                          $(aPrev).click(function() {
+                              $('#hdnStart').val(Number(pageStart) - 5);
+                              $('#hdnEnd').val(Number(pageStart) - 5 + 4);
+                              GetAllWishes(Number(pageStart) - 5);
+                          });
+           
+                          var prevLink = $('<li/>').append(aPrev);
+                          $('.pagination').append(prevLink);
+                      }
+
+          for (var i = Number(pageStart); i <= Number(pageEnd); i++) {
+           
+                          if (i > pageCount) {
+                              break;
+                          }
+           
+           
+                          var aPage = $('<a/>').attr('href', '#').text(i);
+           
+                          $(aPage).click(function(i) {
+                              return function() {
+                                  <!--document.body.innerHTML = "";-->
+                                  $('.well').empty();
+                                  GetAllWishes(i);
+                              }
+                          }(i));
+                          var page = $('<li/>').append(aPage);
+           
+                          if ((_page) == i) {
+                              $(page).attr('class', 'active');
+                          }
+           
+                          $('.pagination').append(page);
+           
+           
+                      }
+                      if ((Number(pageStart) + 5) <= pageCount) {
+                          var nextLink = $('<li/>').append($('<a/>').attr({
+                                  'href': '#'
+                              }, {
+                                  'aria-label': 'Next'
+                              })
+                              .append($('<span/>').attr('aria-hidden', 'true').html('&raquo;').click(function() {
+                                  $('#hdnStart').val(Number(pageStart) + 5);
+                                  $('#hdnEnd').val(Number(pageStart) + 5 + 4);
+                                  GetAllWishes(Number(pageStart) + 5);
+           
+                              })));
+                          $('.pagination').append(nextLink);
+                      }
+
+          var length = data[0].length;
+					var itemsPerRow = 0;
+					var div = $('<div>').attr('class','row');
+          console.log("hi");
+          console.log(div);
+					for(var i=0;i<length;i++){
+            var temp = data[0][i].Title;
+						console.log(temp);
+
+
+						if(itemsPerRow<3){
+							console.log(i);
+							if(i==length-1){
+								div.append(CreateThumb(data[0][i].Id,data[0][i].Title,data[0][i].Description,data[0][i].FilePath));
+								$('.well').append(div);
+							}
+							else{
+							div.append(CreateThumb(data[0][i].Id,data[0][i].Title,data[0][i].Description,data[0][i].FilePath));
+							itemsPerRow++;
+							}
+						}
+						else{
+							$('.well').append(div);
+							div = $('<div>').attr('class','row');
+							div.append(CreateThumb(data[0][i].Id,data[0][i].Title,data[0][i].Description,data[0][i].FilePath));
+							if(i==length-1){
+								$('.well').append(div);
+							}
+							itemsPerRow = 0;
+						}
+					}
+
+
+			        },
+			        error:function(error){
+			        	console.log(error);
+			        }
+    			});
+
+		}
+		function CreateThumb(id,title,desc,filepath,like){
+			var mainDiv = $('<div>').attr('class','col-sm-4 col-md-4');
+			var thumbNail = $('<div>').attr('class','thumbnail');
+			var img = $('<img>').attr({'src':filepath,'data-holder-rendered':true,'style':'height: 150px; width: 150px; display: block'});
+			var caption = $('<div>').attr('class','caption');
+			var title = $('<h3>').text(title);
+			var desc = $('<p>').text(desc);
+
+
+			var p = $('<p>');
+			var btn = $('<button>').attr({'id':'btn_'+id,'type':'button','class':'btn btn-danger btn-sm'});
+			var span = $('<span>').attr({'class':'glyphicon glyphicon-thumbs-up','aria-hidden':'true'});
+
+			<!-- p.append(btn.append(span)); -->
+
+
+
+			caption.append(title);
+			caption.append(desc);
+			caption.append(p);
+
+			thumbNail.append(img);
+			thumbNail.append(caption);
+			mainDiv.append(thumbNail);
+			return mainDiv;
+
+
+		}
+	</script>
+
+    <style>
+	.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 100px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
+}
+    </style>
+
+  </head>
+
+  <body>
+
+   <div class="container">
+<div class="header">
+        <nav>
+          <ul class="nav nav-pills pull-right">
+            <li role="presentation" class="active"><a href="#">Dasboard</a></li>
+      	    <li role="presentation"><a href="/userHome">My List</a></li>
+      	    <li role="presentation"><a href="/showAddWish">Add Image</a></li>
+                  <li role="presentation" ><a href="/logout">Logout</a></li>
+          </ul>
+        </nav>
+        <h3 class="text-muted">Python Flask App</h3>
+      </div>
+
+
+
+      <nav>
+          <ul class="pagination">
+
+          </ul>
+      </nav>
+<div class="well">
+
+</div>
+
+
+      <footer class="footer">
+        <p>&copy; Company 2015</p>
+      </footer>
+
+      <input type="hidden" id="hdnStart" value="1" />
+      <input type="hidden" id="hdnEnd" value="5"/>
+
+    </div>
+  </body>
+</html>
